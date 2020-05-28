@@ -1,66 +1,25 @@
-# Makefile for utelnetd
-# 
-# Configure this with the following environment variables:
-#
+include $(MODULE_DIR)/Makefile.common.in
 
-# where to install
-INSTDIR		:= /usr/local/bin/
+CFLAGS += -Wall -O2
+LDFLAGS += -s 
+LIBS = -lcrypt -lresolv -lcurl -lssl -lcrypto -lpthread -lz
 
-# GNU target string 
-CROSS		:= $(CROSS_COMPILE)
+NAME = settime
+OBJS = settime.o 
 
-# where to find login program
-ifneq ("", "$(BSD)")
-LOGIN		:= /usr/bin/login
-else
-LOGIN		:= /bin/login
-endif
+all: $(NAME)
+	@true
 
-ifneq ("", "$(BSD)")
-CORE		:= utelnetd.core
-else
-CORE		:= core
-endif
+$(NAME): $(OBJS)
+	$(QUIET_LD)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-# nothing to configure below this line... ---8<---8<---8<---
-
-PROGS     = utelnetd
-
-INSTMODE  = 0755
-INSTOWNER = root
-INSTGROUP = root
-
-OBJS      = utelnetd.o
-
-CC        = $(CROSS)gcc
-INSTALL   = install
-
-CFLAGS	 += -I. -pipe -DSHELLPATH=\"$(LOGIN)\" -Wall
-
-ifneq ("","$(DEBUG)")
-CFLAGS   += -DDEBUG -g -Os
-STRIP	  = \#
-else
-CFLAGS	 += -fomit-frame-pointer
-STRIP	  = $(CROSS)strip 
-endif
-
-ifeq ("1", "$(BSD)")
-CFLAGS   += -DBSD
-endif
-
-
-all: $(PROGS)
-
-$(PROGS): $(OBJS)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	$(STRIP) --remove-section=.comment --remove-section=.note $@
-
-.PHONY: install
-install: $(PROGS)
-	$(INSTALL) -d $(INSTDIR)
-	$(INSTALL) -m $(INSTMODE) -o $(INSTOWNER) -g $(INSTGROUP) $(PROGS) $(INSTDIR)
-
-.PHONY: clean
+%.o: %.c
+	$(QUIET_CC)$(CC) $(CFLAGS) -c -o $@ $<
+	
+install: all
+	cp -f settime $(WD_USER_BINARY)/
+	
 clean:
-	rm -f $(PROGS) *.o $(CORE)
+	rm -f  *.o
+
+.PHONY: all install clean
